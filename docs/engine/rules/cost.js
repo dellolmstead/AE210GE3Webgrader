@@ -11,17 +11,17 @@ export function runRecurringCostChecks(workbook) {
   const numAircraft = asNumber(getCell(main, "N31"));
 
   if (numAircraft === 187) {
-    if (cost != null && cost > 90) {
+    if (cost != null && cost > 115) {
       feedback.push(format(STRINGS.cost.over187, cost));
       delta -= 1;
-    } else if (cost != null && cost <= 80) {
+    } else if (cost != null && cost <= 100) {
       feedback.push(format(STRINGS.cost.obj187, cost));
     }
   } else if (numAircraft === 800) {
-    if (cost != null && cost > 60) {
+    if (cost != null && cost > 75) {
       feedback.push(format(STRINGS.cost.over800, cost));
       delta -= 1;
-    } else if (cost != null && cost <= 50) {
+    } else if (cost != null && cost <= 63) {
       feedback.push(format(STRINGS.cost.obj800, cost));
     }
   } else {

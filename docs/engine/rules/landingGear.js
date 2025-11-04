@@ -1,5 +1,6 @@
 import { STRINGS } from "../messages.js";
 import { getCell, asNumber } from "../parseUtils.js";
+import { format } from "../format.js";
 
 export function runLandingGearChecks(workbook) {
   const feedback = [];
@@ -9,7 +10,7 @@ export function runLandingGearChecks(workbook) {
 
   const noseRule = asNumber(getCell(gear, "J19"));
   if (Number.isFinite(noseRule) && (noseRule < 9.5 || noseRule > 20)) {
-    feedback.push(STRINGS.gear.nose);
+    feedback.push(format(STRINGS.gear.nose, noseRule));
     good = false;
   }
 
@@ -18,7 +19,7 @@ export function runLandingGearChecks(workbook) {
   const tipbackUpper = asNumber(getCell(gear, "L20"));
   const tipbackLower = asNumber(getCell(gear, "L21"));
   if (Number.isFinite(tipbackUpper) && Number.isFinite(tipbackLower) && !(tipbackUpper < tipbackLower)) {
-    feedback.push(STRINGS.gear.tipback);
+    feedback.push(format(STRINGS.gear.tipback, tipbackUpper, tipbackLower));
     good = false;
   }
 
@@ -26,14 +27,14 @@ export function runLandingGearChecks(workbook) {
   const rolloverUpper = asNumber(getCell(gear, "M20"));
   const rolloverLower = asNumber(getCell(gear, "M21"));
   if (Number.isFinite(rolloverUpper) && Number.isFinite(rolloverLower) && !(rolloverUpper < rolloverLower)) {
-    feedback.push(STRINGS.gear.rollover);
+    feedback.push(format(STRINGS.gear.rollover, rolloverUpper, rolloverLower));
     good = false;
   }
 
   // Rotation: MATLAB expects Gear(19,14) < 200 kts; numeric value is in N20.
   const rotationSpeed = asNumber(getCell(gear, "N20"));
   if (Number.isFinite(rotationSpeed) && !(rotationSpeed < 200)) {
-    feedback.push(STRINGS.gear.rotation);
+    feedback.push(format(STRINGS.gear.rotation, rotationSpeed));
     good = false;
   }
 

@@ -74,10 +74,10 @@ export const STRINGS = {
     obj800: "Recurring cost meets objective (≤$50M): $%.1fM",
   },
   gear: {
-    nose: "Violates Nose gear 90/10 rule ",
-    tipback: "Violates Tipback angle requirement ",
-    rollover: "Violates Rollover angle requirement ",
-    rotation: "Violates Takeoff Rotation Speed ",
+    nose: "Violates Nose gear 90/10 rule: %.1f% (must be between 10% and 20%)",
+    tipback: "Violates Tipback angle requirement: upper %.1f° must be less than lower %.1f°",
+    rollover: "Violates Rollover angle requirement: upper %.1f° must be less than lower %.1f°",
+    rotation: "Violates Takeoff Rotation Speed: %.1f kts (must be < 200 kts)",
     deduction:
       "-1 point Something is wrong with the landing gear/takeoff speed, see the hints in the \"Gear\" tab! ",
   },
