@@ -591,20 +591,26 @@ disconnected = 0;
 
 % Check x-direction
 fuselage_length = Main(32, 2); % B32
+PCS_area = Main(18, 3);        % Pitch control surface area (C18)
 PCS_x = Main(23, 3);           % C23
 PCS_root_chord = Geom(8, 3);   % C8
 
-if PCS_x > (fuselage_length - 0.25 * PCS_root_chord)
-    logText = logf(logText, 'PCS X-location too far aft. Must overlap at least 25%% of root chord.\n');
-    disconnected = disconnected + 1;
+if PCS_area >= 1
+    if PCS_x > (fuselage_length - 0.25 * PCS_root_chord)
+        logText = logf(logText, 'PCS X-location too far aft. Must overlap at least 25%% of root chord.\n');
+        disconnected = disconnected + 1;
+    end
 end
 
-VT_x = Main(23, 8);           % H23
-VT_root_chord = Geom(10, 3); % C10
+VT_area = Main(18, 8);         % Vertical tail area (H18)
+VT_x = Main(23, 8);            % H23
+VT_root_chord = Geom(10, 3);   % C10
 
-if VT_x > (fuselage_length - 0.25 * VT_root_chord)
-    logText = logf(logText, 'VT X-location too far aft. Must overlap at least 25%% of root chord.\n');
-    disconnected = disconnected + 1;
+if VT_area >= 1
+    if VT_x > (fuselage_length - 0.25 * VT_root_chord)
+        logText = logf(logText, 'VT X-location too far aft. Must overlap at least 25%% of root chord.\n');
+        disconnected = disconnected + 1;
+    end
 end
 
 % Check PCS height to ensure inside fuselage
@@ -612,22 +618,26 @@ PCS_z = Main(25, 3);          % C25
 fuse_z_center = Main(52, 4);  % D52
 fuse_z_height = Main(52, 6);  % F52
 
-if PCS_z < (fuse_z_center - fuse_z_height/2) || PCS_z > (fuse_z_center + fuse_z_height/2)
-    logText = logf(logText, 'PCS Z-location outside fuselage vertical bounds.\n');
-    disconnected = disconnected + 1;
+if PCS_area >= 1
+    if PCS_z < (fuse_z_center - fuse_z_height/2) || PCS_z > (fuse_z_center + fuse_z_height/2)
+        logText = logf(logText, 'PCS Z-location outside fuselage vertical bounds.\n');
+        disconnected = disconnected + 1;
+    end
 end
 
 % Check VT spacing to ensure inside fuselage
 VT_y = Main(24, 8);           % H24
 fuse_width = Main(52, 5);     % E52
 
-if VT_y > fuse_width/2
-    logText = logf(logText, 'VT Y-location outside fuselage width.\n');
-    disconnected = disconnected + 1;
+if VT_area >= 1
+    if VT_y > fuse_width/2
+        logText = logf(logText, 'VT Y-location outside fuselage width.\n');
+        disconnected = disconnected + 1;
+    end
 end
 
 % Strakes
-if Main(18, 4) > 1  % D18 > 1 indicating area in the strakes
+if Main(18, 4) >= 1  % D18 >= 1 indicating area in the strakes
     sweep = Geom(15, 11);  % K15
     y = Geom(152, 13);     % M152
     strake = Geom(155, 12); % L155
@@ -642,13 +652,17 @@ if Main(18, 4) > 1  % D18 > 1 indicating area in the strakes
 end
 
 component_positions = Main(23, 2:8);  % B23:H23
+component_areas = Main(18, 2:8);      % B18:H18
 
-% Check if any component is behind or at the end of the fuselage
-if any(component_positions >= fuselage_length)
-    logText = logf(logText, 'One or more components X Location are not ahead of the fuselage end (B32 = %.2f)\n', fuselage_end);
-    pt = pt - 1;
-else
-    %     logText = logf(logText, 'All components are correctly positioned ahead of the fuselage end (B32 = %.2f)\n', fuselage_end);
+% Check if any component with meaningful area is behind or at the end of the fuselage
+active_components = component_positions(component_areas >= 1);
+if ~isempty(active_components)
+    if any(active_components >= fuselage_length)
+        logText = logf(logText, 'One or more components X Location are not ahead of the fuselage end (B32 = %.2f)\n', fuselage_end);
+        pt = pt - 1;
+    else
+        %     logText = logf(logText, 'All components are correctly positioned ahead of the fuselage end (B32 = %.2f)\n', fuselage_end);
+    end
 end
 
 
@@ -755,7 +769,7 @@ end
 
 LandingGearGood = 1;
 
-if Gear(19, 10) < 10 || Gear(19, 10) > 20 % J19 between 10 and 20%
+if Gear(19, 10) < 9.5 || Gear(19, 10) > 20.5 % J19 between 10 and 20%
     logText = logf(logText, 'Violates Nose gear 90/10 rule \n');
     LandingGearGood = 0;
 end
@@ -774,16 +788,27 @@ else
     LandingGearGood = 0;
 end
 
-if Gear(19, 14) < 200 %M19 is less than 200 kts TO speed
-    % Rotation speed okay
-else
-    logText = logf(logText, 'Violates Takeoff Rotation Speed \n');
+rotation_authority = Gear(20, 14); % N20
+takeoff_speed = Gear(21, 14);      % N21
+
+if isnan(rotation_authority) || isnan(takeoff_speed)
+    logText = logf(logText, 'Unable to verify takeoff rotation capability due to missing gear data (check N20 and N21).\n');
     LandingGearGood = 0;
+else
+    if rotation_authority >= takeoff_speed
+        logText = logf(logText, 'Takeoff rotation possible at %0.1f, which is greater than your takeoff speed of %.1f. Increase pitch authority or reduce the weight carried by the nose wheel to reduce your rotation speed.\n', rotation_authority,takeoff_speed);
+        LandingGearGood = 0;
+    end
+
+    if takeoff_speed > 200
+        logText = logf(logText, 'Excessive takeoff speed (%.1f kts). Increase your wing area or decrease your takeoff weight to reduce your takeoff speed below 200 knots.\n', takeoff_speed);
+        LandingGearGood = 0;
+    end
 end
 
 if LandingGearGood ~= 1
     pt = pt - 1;
-    logText = logf(logText, '-1 point Something is wrong with the landing gear/takeoff speed, see the hints in the "Gear" tab! \n');
+    logText = logf(logText, '-1 point Something is wrong with the landing gear/takeoff speed, see the hints above and in the "Gear" tab! \n');
 end
 %     fprintf('Geometry Check Complete\n')
 
@@ -814,7 +839,7 @@ sheets.Main   = safeReadMatrix(filename, 'Main',   {'T3','U3','V3','W3','X3','Y3
     'O10','P10','Q10','O18','X40','Q23','Q31','N31','B32','C23','H23',...
     'D18','D23','D52','F52','H24','E52'});
 sheets.Consts = safeReadMatrix(filename, 'Consts', {'K22','K23','K24','K26','K27','K28','K29','K32','AO42','AQ41','K33'});
-sheets.Gear   = safeReadMatrix(filename, 'Gear',   {'J19','L19','L20','M19','M20','N19','N20'});
+sheets.Gear   = safeReadMatrix(filename, 'Gear',   {'J19','L19','L20','M19','M20','N19','N20','N21'});
 sheets.Geom   = safeReadMatrix(filename, 'Geom',   {'C8','C10','M152','K15','L155','L38'});
 
 % Constants is off by three rows. Row 22 of the Consts tab comes in as

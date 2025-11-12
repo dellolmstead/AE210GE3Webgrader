@@ -13,9 +13,12 @@ export function runAttachmentChecks(workbook) {
   const geom = workbook.sheets.geom;
 
   const fuselageLength = asNumber(getCell(main, "B32"));
+  const pcsArea = asNumber(getCell(main, "C18"));
   const pcsX = asNumber(getCell(main, "C23"));
   const pcsRootChord = asNumber(getCell(geom, "C8"));
   if (
+    pcsArea != null &&
+    pcsArea >= 1 &&
     pcsX != null &&
     pcsRootChord != null &&
     fuselageLength != null &&
@@ -25,9 +28,12 @@ export function runAttachmentChecks(workbook) {
     disconnected += 1;
   }
 
+  const vtArea = asNumber(getCell(main, "H18"));
   const vtX = asNumber(getCell(main, "H23"));
   const vtRootChord = asNumber(getCell(geom, "C10"));
   if (
+    vtArea != null &&
+    vtArea >= 1 &&
     vtX != null &&
     vtRootChord != null &&
     fuselageLength != null &&
@@ -41,6 +47,8 @@ export function runAttachmentChecks(workbook) {
   const fuseZCenter = asNumber(getCell(main, "D52"));
   const fuseZHeight = asNumber(getCell(main, "F52"));
   if (
+    pcsArea != null &&
+    pcsArea >= 1 &&
     pcsZ != null &&
     fuseZCenter != null &&
     fuseZHeight != null &&
@@ -53,6 +61,8 @@ export function runAttachmentChecks(workbook) {
   const vtY = asNumber(getCell(main, "H24"));
   const fuseWidth = asNumber(getCell(main, "E52"));
   if (
+    vtArea != null &&
+    vtArea >= 1 &&
     vtY != null &&
     fuseWidth != null &&
     vtY > fuseWidth / 2
@@ -62,7 +72,7 @@ export function runAttachmentChecks(workbook) {
   }
 
   const strakeArea = asNumber(getCell(main, "D18"));
-  if (strakeArea != null && strakeArea > 1) {
+  if (strakeArea != null && strakeArea >= 1) {
     const sweep = asNumber(getCell(geom, "K15"));
     const y = asNumber(getCell(geom, "M152"));
     const strake = asNumber(getCell(geom, "L155"));
@@ -82,19 +92,22 @@ export function runAttachmentChecks(workbook) {
   }
 
   if (fuselageLength != null) {
-    const componentPositions = [];
+    const activeComponentPositions = [];
     for (let col = 2; col <= 8; col += 1) {
-      const val = asNumber(getCellByIndex(main, 23, col));
-      if (val != null) {
-        componentPositions.push(val);
+      const area = asNumber(getCellByIndex(main, 18, col));
+      const position = asNumber(getCellByIndex(main, 23, col));
+      if (area != null && area >= 1 && position != null) {
+        activeComponentPositions.push(position);
       }
     }
-    const hasBehind = componentPositions.some((value) => value >= fuselageLength);
-    if (hasBehind) {
-      feedback.push(
-        format(STRINGS.attachment.fuselage, fuselageLength)
-      );
-      delta -= 1;
+    if (activeComponentPositions.length > 0) {
+      const hasBehind = activeComponentPositions.some((value) => value >= fuselageLength);
+      if (hasBehind) {
+        feedback.push(
+          format(STRINGS.attachment.fuselage, fuselageLength)
+        );
+        delta -= 1;
+      }
     }
   }
 

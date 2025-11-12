@@ -31,11 +31,20 @@ export function runLandingGearChecks(workbook) {
     good = false;
   }
 
-  // Rotation: MATLAB expects Gear(19,14) < 200 kts; numeric value is in N20.
-  const rotationSpeed = asNumber(getCell(gear, "N20"));
-  if (Number.isFinite(rotationSpeed) && !(rotationSpeed < 200)) {
-    feedback.push(format(STRINGS.gear.rotation, rotationSpeed));
+  const rotationAuthority = asNumber(getCell(gear, "N20"));
+  const takeoffSpeed = asNumber(getCell(gear, "N21"));
+  if (!Number.isFinite(rotationAuthority) || !Number.isFinite(takeoffSpeed)) {
+    feedback.push(STRINGS.gear.rotationData);
     good = false;
+  } else {
+    if (!(rotationAuthority < takeoffSpeed)) {
+      feedback.push(format(STRINGS.gear.rotationAuthority, rotationAuthority, takeoffSpeed));
+      good = false;
+    }
+    if (takeoffSpeed > 200) {
+      feedback.push(format(STRINGS.gear.takeoffSpeed, takeoffSpeed));
+      good = false;
+    }
   }
 
   let delta = 0;

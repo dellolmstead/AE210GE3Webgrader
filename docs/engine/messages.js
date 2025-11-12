@@ -77,7 +77,12 @@ export const STRINGS = {
     nose: "Violates Nose gear 90/10 rule: %.1f% (must be between 10% and 20%)",
     tipback: "Violates Tipback angle requirement: upper %.1f° must be less than lower %.1f°",
     rollover: "Violates Rollover angle requirement: upper %.1f° must be less than lower %.1f°",
-    rotation: "Violates Takeoff Rotation Speed: %.1f kts (must be < 200 kts)",
+    rotationAuthority:
+      "Takeoff rotation possible at %.1f kts, which is greater than your takeoff speed of %.1f kts. Increase pitch authority or reduce the weight carried by the nose wheel to reduce your rotation speed.",
+    rotationData:
+      "Unable to verify takeoff rotation capability due to missing gear data (check N20 and N21).",
+    takeoffSpeed:
+      "Excessive takeoff speed (%.1f kts). Increase your wing area or decrease your takeoff weight to reduce your takeoff speed below 200 knots.",
     deduction:
       "-1 point Something is wrong with the landing gear/takeoff speed, see the hints in the \"Gear\" tab! ",
   },
